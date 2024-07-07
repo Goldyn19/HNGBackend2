@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-rwv!-3xgwh2&vsf&+wq(b%2@oh7@^bqqr$^!b2xxr_49w&^$yw
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS =  ['.vercel.app',  'HNGBackend2.vercel.app', '127.0.0.1']
 
 
 # Application definition
@@ -100,11 +100,11 @@ WSGI_APPLICATION = 'HNGBackend2.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'HNGBackend2',
-        'USER': 'postgres',
-        'PASSWORD': 'golden',
-        'HOST': 'localhost',  # Set to your database server's address
-        'PORT': '5432',       # Default port for PostgreSQL
+        'NAME': 'defaultdb',
+        'USER': 'avnadmin',
+        'PASSWORD': 'AVNS_T0qZsJj07araIkyI74x',
+        'HOST': 'pg-18fb2e1b-hngbackend2.k.aivencloud.com',  # Set to your database server's address
+        'PORT': '14651',       # Default port for PostgreSQL
     }
 }
 
