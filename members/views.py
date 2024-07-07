@@ -1,16 +1,18 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.request import Request
-from .serializers import UserSerializer, LoginSerializer
+from .serializers import UserSerializer
 from .tokens import create_jwt_pair_for_user
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from .models import User
-
+from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
 
 class SignUpView(generics.GenericAPIView):
     serializer_class = UserSerializer
+    permission_classes = [AllowAny]
 
     def post(self, request: Request):
         serializer = self.serializer_class(data=request.data)
@@ -36,17 +38,43 @@ class SignUpView(generics.GenericAPIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class LoginView(generics.GenericAPIView):
-    serializer_class = LoginSerializer
+# class LoginView(generics.GenericAPIView):
+#
+#     permission_classes = [AllowAny]
+#
+#     def post(self, request: Request):
+#         password = request.data.get('password')
+#         email = request.data.get('email')
+#
+#         user = authenticate(email=email, password=password)
+#
+#         if user is not None:
+#             tokens = create_jwt_pair_for_user(user)
+#             response_data = {
+#                 'status': 'success',
+#                 'message': 'Login successful',
+#                 'data': {
+#                     'accessToken': tokens['access'],
+#                     'user': UserSerializer(user).data
+#                 }
+#             }
+#             return Response(data=response_data, status=status.HTTP_200_OK)
+#         else:
+#             return Response(data={
+#                 'status': 'Bad request',
+#                 'message': 'Authentication failed',
+#                 'statusCode': 401
+#             }, status=status.HTTP_401_UNAUTHORIZED)
 
-    def post(self, request: Request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
+class LoginView (APIView):
+    permission_classes = [AllowAny]
 
-        email = serializer.validated_data['email']
-        password = serializer.validated_data['password']
+    def post(self, request:Request):
+        email = request.data.get('email')
+        password = request.data.get('password')
 
         user = authenticate(email=email, password=password)
+        # user = get_object_or_404(User, email=email)
 
         if user is not None:
             tokens = create_jwt_pair_for_user(user)
@@ -65,6 +93,7 @@ class LoginView(generics.GenericAPIView):
                 'message': 'Authentication failed',
                 'statusCode': 401
             }, status=status.HTTP_401_UNAUTHORIZED)
+
 
 
 class UserDetailView(generics.RetrieveAPIView):

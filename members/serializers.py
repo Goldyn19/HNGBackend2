@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
 from .models import User
+from organization.models import Organisation
+from organization.generate import generate_org_id
 import re
 
 
@@ -44,8 +46,8 @@ class UserSerializer(serializers.ModelSerializer):
         # if len(attrs['password']) < 8:
         #     raise ValidationError({'password': 'Password must be at least 8 characters long'})
 
-        if attrs.get('phone') and not re.match(r"^\+?1?\d{9,15}$", attrs['phone']):
-            raise ValidationError({'phone': 'Invalid phone number format'})
+        # if attrs.get('phone') and not re.match(r"^\+?1?\d{9,15}$", attrs['phone']):
+        #     raise ValidationError({'phone': 'Invalid phone number format'})
 
         return super().validate(attrs)
 
@@ -54,9 +56,13 @@ class UserSerializer(serializers.ModelSerializer):
         user = super().create(validated_data)
         user.set_password(password)
         user.save()
+
+        org_name = f"{validated_data['firstName']}'s Organisation"
+        org_id = generate_org_id()
+        organization = Organisation.objects.create(orgId=org_id, name=org_name)
+
+        # Add user to the organization
+        organization.users.add(user)
         return user
 
 
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True, min_length=8)

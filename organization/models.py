@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class Organization(models.Model):
+class Organisation(models.Model):
     orgId = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)

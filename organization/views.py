@@ -5,8 +5,10 @@ from .models import Organisation
 from .serializers import OrganisationSerializer
 from django.shortcuts import get_object_or_404
 from members.models import User
+from .generate import generate_org_id
 
-class OrganisationListView(generics.ListAPIView):
+
+class OrganisationListCreateView(generics.ListAPIView, generics.CreateAPIView):
     serializer_class = OrganisationSerializer
     permission_classes = [IsAuthenticated]
 
@@ -21,6 +23,34 @@ class OrganisationListView(generics.ListAPIView):
                 "organisations": serializer.data
             }
         }, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            organisation = serializer.save()
+            organisation.orgId = generate_org_id()  # Ensure orgId is unique
+            organisation.save()
+            response_data = {
+                "status": "success",
+                "message": "Organisation created successfully",
+                "data": {
+                    "orgId": organisation.orgId,
+                    "name": organisation.name,
+                    "description": organisation.description
+                }
+            }
+            return Response(response_data, status=status.HTTP_201_CREATED)
+
+        return Response({
+            "status": "Bad Request",
+            "message": "Client error",
+            "statusCode": 400
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
 
 
 class OrganisationDetailView(generics.RetrieveAPIView):
@@ -47,32 +77,6 @@ class OrganisationDetailView(generics.RetrieveAPIView):
         }, status=status.HTTP_403_FORBIDDEN)
 
 
-class OrganisationCreateView(generics.CreateAPIView):
-    serializer_class = OrganisationSerializer
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            organisation = serializer.save()
-            organisation.orgId = str(organisation.id)  # Ensure orgId is unique
-            organisation.save()
-            response_data = {
-                "status": "success",
-                "message": "Organisation created successfully",
-                "data": {
-                    "orgId": organisation.orgId,
-                    "name": organisation.name,
-                    "description": organisation.description
-                }
-            }
-            return Response(response_data, status=status.HTTP_201_CREATED)
-
-        return Response({
-            "status": "Bad Request",
-            "message": "Client error",
-            "statusCode": 400
-        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AddUserToOrganisationView(generics.GenericAPIView):
