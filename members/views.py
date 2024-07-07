@@ -35,36 +35,10 @@ class SignUpView(generics.GenericAPIView):
             'message': 'Registration unsuccessful',
             'statusCode': 400,
             'errors': serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+        }, status= status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
-# class LoginView(generics.GenericAPIView):
-#
-#     permission_classes = [AllowAny]
-#
-#     def post(self, request: Request):
-#         password = request.data.get('password')
-#         email = request.data.get('email')
-#
-#         user = authenticate(email=email, password=password)
-#
-#         if user is not None:
-#             tokens = create_jwt_pair_for_user(user)
-#             response_data = {
-#                 'status': 'success',
-#                 'message': 'Login successful',
-#                 'data': {
-#                     'accessToken': tokens['access'],
-#                     'user': UserSerializer(user).data
-#                 }
-#             }
-#             return Response(data=response_data, status=status.HTTP_200_OK)
-#         else:
-#             return Response(data={
-#                 'status': 'Bad request',
-#                 'message': 'Authentication failed',
-#                 'statusCode': 401
-#             }, status=status.HTTP_401_UNAUTHORIZED)
+
 
 class LoginView (APIView):
     permission_classes = [AllowAny]

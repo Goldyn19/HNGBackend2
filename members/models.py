@@ -5,6 +5,7 @@ from django.core.validators import EmailValidator
 from organization.models import Organisation
 
 
+
 class CustomUserManger(BaseUserManager):
     def create_user(self, userId, firstName, lastName, email,  password=None, **extra_fields):
         if not userId:
