@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import EmailValidator
+from organization.models import Organization
 
 
 class CustomUserManger(BaseUserManager):
@@ -40,6 +41,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True, null=False, validators=[EmailValidator])
     password = models.CharField(max_length=255, null=False)
     phone = models.CharField(max_length=15, blank=True, null=True)
+    organisations = models.ManyToManyField(Organization, related_name='users')
 
     objects = CustomUserManger()
     REQUIRED_FIELDS = ['firstName', 'lastName', 'email']

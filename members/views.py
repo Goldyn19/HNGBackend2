@@ -1,51 +1,102 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.request import Request
-from rest_framework.views import APIView
-from .serializers import UserSerializer
+from .serializers import UserSerializer, LoginSerializer
 from .tokens import create_jwt_pair_for_user
 from django.contrib.auth import authenticate
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
+from .models import User
 
 
 class SignUpView(generics.GenericAPIView):
     serializer_class = UserSerializer
 
     def post(self, request: Request):
-        data = request.data
-        serializer = self.serializer_class(data=data)
-
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            response = {
-                'message': 'User created successfully',
-                'data': serializer.data
+            user = serializer.save()
+            tokens = create_jwt_pair_for_user(user)
+
+            response_data = {
+                'status': 'success',
+                'message': 'Registration successful',
+                'data': {
+                    'accessToken': tokens['access'],
+                    'user': UserSerializer(user).data
+                }
             }
-            return Response(data=response, status=status.HTTP_201_CREATED)
+            return Response(data=response_data, status=status.HTTP_201_CREATED)
 
         return Response(data={
-            'errors': [
-                {
-                    'field': key,
-                    'message': value[0] if isinstance(value, list) else value
-                } for key, value in serializer.errors.items()
-            ]
-        }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+            'status': 'Bad request',
+            'message': 'Registration unsuccessful',
+            'statusCode': 400,
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class LoginView(APIView):
+class LoginView(generics.GenericAPIView):
+    serializer_class = LoginSerializer
 
     def post(self, request: Request):
-        email = request.data.get('email')
-        password = request.data.get('password')
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data['email']
+        password = serializer.validated_data['password']
 
         user = authenticate(email=email, password=password)
 
         if user is not None:
             tokens = create_jwt_pair_for_user(user)
-            response = {
-                'message': 'login successful',
-                'tokens':tokens
+            response_data = {
+                'status': 'success',
+                'message': 'Login successful',
+                'data': {
+                    'accessToken': tokens['access'],
+                    'user': UserSerializer(user).data
+                }
             }
-            return Response(data=response, status=status.HTTP_200_OK)
+            return Response(data=response_data, status=status.HTTP_200_OK)
         else:
-            return Response(data={'message': 'User does not exist'})
+            return Response(data={
+                'status': 'Bad request',
+                'message': 'Authentication failed',
+                'statusCode': 401
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+
+class UserDetailView(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user_id = kwargs.get('id')
+        user = get_object_or_404(User, userId=user_id)
+
+        # Check if the requesting user is the same as the user being requested
+        if request.user == user:
+            serializer = self.get_serializer(user)
+            return Response({
+                "status": "success",
+                "message": "User record retrieved successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+
+        # Check if the requesting user is part of the user's organisations
+        user_organisations = user.organisations.all()
+        if request.user.organisations.filter(id__in=user_organisations).exists():
+            serializer = self.get_serializer(user)
+            return Response({
+                "status": "success",
+                "message": "User record retrieved successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+
+        return Response({
+            "status": "Forbidden",
+            "message": "You do not have permission to access this user's record",
+            "statusCode": 403
+        }, status=status.HTTP_403_FORBIDDEN)
