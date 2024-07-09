@@ -3,13 +3,12 @@ from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import EmailValidator
 from organization.models import Organisation
+from organization.generate import generate_user_id
 
 
 
 class CustomUserManger(BaseUserManager):
-    def create_user(self, userId, firstName, lastName, email,  password=None, **extra_fields):
-        if not userId:
-            raise ValueError("The User ID must be set")
+    def create_user(self, firstName, lastName, email, password=None, userId=None, **extra_fields):
         if not firstName:
             raise ValueError("The First Name must be set")
         if not lastName:
@@ -18,7 +17,11 @@ class CustomUserManger(BaseUserManager):
             raise ValueError("The Email must be set")
         if not password:
             raise ValueError("The Password must be set")
+
         email = self.normalize_email(email)
+        if userId is None:
+            userId = generate_user_id()
+
         user = self.model(userId=userId, firstName=firstName, lastName=lastName, email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -36,7 +39,7 @@ class CustomUserManger(BaseUserManager):
 
 
 class User(AbstractBaseUser):
-    userId = models.CharField(max_length=255, unique=True)
+    userId = models.CharField(max_length=255, unique=True, default=generate_user_id)
     firstName = models.CharField(max_length=255, null=False)
     lastName = models.CharField(max_length=255, null=False)
     email = models.EmailField(unique=True, null=False, validators=[EmailValidator])
