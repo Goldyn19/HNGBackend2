@@ -15,7 +15,7 @@ class TokenGenerationTestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
-            userId='testuser',
+
             firstName='Test',
             lastName='User',
             email='testuser@example.com',
@@ -50,12 +50,12 @@ class OrganisationAccessTestCase(TestCase):
 
     def test_user_access_own_organisation(self):
         self.client.force_authenticate(user=self.user1)
-        response = self.client.get(f'/api/organisations/{self.org1.orgId}/')
+        response = self.client.get(f'/api/organisations/{self.org1.orgId}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_user_no_access_other_organisation(self):
         self.client.force_authenticate(user=self.user1)
-        response = self.client.get(f'/api/organisations/{self.org2.orgId}/')
+        response = self.client.get(f'/api/organisations/{self.org2.orgId}')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
@@ -76,7 +76,7 @@ class RegisterEndpointTestCase(TestCase):
             'userId': 'user123'
         }
 
-        response = self.client.post('/auth/register/', data, format='json')
+        response = self.client.post('/auth/register', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
 
@@ -108,14 +108,14 @@ class RegisterEndpointTestCase(TestCase):
             'password': 'password456',
             'userId': 'user456'
         }
-        self.client.post('/auth/register/', data, format='json')
+        self.client.post('/auth/register', data, format='json')
 
 
         login_data = {
             'email': 'jane.smith@example.com',
             'password': 'password456'
         }
-        response = self.client.post('/auth/login/', login_data, format='json')
+        response = self.client.post('/auth/login', login_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
@@ -135,7 +135,7 @@ class RegisterEndpointTestCase(TestCase):
         ]
 
         for data in test_cases:
-            response = self.client.post('/auth/register/', data, format='json')
+            response = self.client.post('/auth/register', data, format='json')
             self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
             self.assertEqual(response.data['status'], 'Bad request')
 
@@ -157,7 +157,7 @@ class RegisterEndpointTestCase(TestCase):
             'userId': 'user123'
         }
 
-        response = self.client.post('/auth/register/', data, format='json')
+        response = self.client.post('/auth/register', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
